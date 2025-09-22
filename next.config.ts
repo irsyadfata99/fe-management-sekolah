@@ -21,6 +21,13 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      // ADD THIS: picsum.photos untuk reliable images
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 
