@@ -105,7 +105,7 @@ export default function TestAPIPage() {
 
       // Use temporary token for testing
       const tempToken = localStorage.getItem("temp_test_token");
-      const response = await api.get("/api/admin/dashboard-stats", {
+      const response = await api.get("/api/admin/dashboard/stats", {
         headers: {
           Authorization: `Bearer ${tempToken}`,
         },
