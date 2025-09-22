@@ -1,8 +1,3 @@
-// ============================================================================
-// 3. FIXED: src/lib/ThemeProvider.tsx
-// Fix favicon href type casting error
-// ============================================================================
-
 "use client";
 import { createContext, useContext, useEffect, ReactNode } from "react";
 import { themes, Theme } from "../config/themes";
@@ -27,15 +22,15 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const root = document.documentElement;
 
     // Apply colors
-    root.style.setProperty("--color-primary", selectedTheme.colors.primary);
-    root.style.setProperty("--color-secondary", selectedTheme.colors.secondary);
-    root.style.setProperty("--color-accent", selectedTheme.colors.accent);
-    root.style.setProperty("--color-background", selectedTheme.colors.background);
-    root.style.setProperty("--color-surface", selectedTheme.colors.surface);
-    root.style.setProperty("--color-text-primary", selectedTheme.colors.text.primary);
-    root.style.setProperty("--color-text-secondary", selectedTheme.colors.text.secondary);
-    root.style.setProperty("--color-text-muted", selectedTheme.colors.text.muted);
-    root.style.setProperty("--color-border", selectedTheme.colors.border);
+    root.style.setProperty("--theme-primary", selectedTheme.colors.primary);
+    root.style.setProperty("--theme-secondary", selectedTheme.colors.secondary);
+    root.style.setProperty("--theme-accent", selectedTheme.colors.accent);
+    root.style.setProperty("--theme-background", selectedTheme.colors.background);
+    root.style.setProperty("--theme-surface", selectedTheme.colors.surface);
+    root.style.setProperty("--theme-text-primary", selectedTheme.colors.text.primary);
+    root.style.setProperty("--theme-text-secondary", selectedTheme.colors.text.secondary);
+    root.style.setProperty("--theme-text-muted", selectedTheme.colors.text.muted);
+    root.style.setProperty("--theme-border", selectedTheme.colors.border);
 
     // Apply typography
     root.style.setProperty("--font-family", `${selectedTheme.typography.fontFamily}, sans-serif`);
@@ -43,7 +38,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     // Update title dan favicon
     document.title = `${schoolConfig.name} - Sistem Informasi Sekolah`;
 
-    // FIXED: Proper type casting untuk favicon
+    // Update favicon
     const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
     if (favicon) {
       favicon.href = schoolConfig.assets.favicon;

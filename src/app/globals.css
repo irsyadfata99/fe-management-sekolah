@@ -63,6 +63,108 @@ body {
   padding: 0;
 }
 
+/* Container and Layout */
+.container-custom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.section-padding {
+  padding: 4rem 0;
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: rgb(var(--theme-primary));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: rgb(var(--theme-primary));
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: 2px solid rgb(var(--theme-primary));
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background-color: rgb(var(--theme-primary));
+  color: white;
+}
+
+/* Card Component */
+.card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Theme-aware classes */
+.theme-primary {
+  background-color: rgb(var(--theme-primary));
+}
+
+.theme-secondary {
+  background-color: rgb(var(--theme-secondary));
+}
+
+.theme-surface {
+  background-color: rgb(var(--theme-surface));
+}
+
+.theme-text-primary {
+  color: rgb(var(--theme-text-primary));
+}
+
+.theme-text-secondary {
+  color: rgb(var(--theme-text-secondary));
+}
+
+.theme-border {
+  border-color: rgb(var(--theme-border));
+}
+
+/* Text utilities */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Utility classes using RGB values */
 @layer utilities {
   .text-theme-primary {
