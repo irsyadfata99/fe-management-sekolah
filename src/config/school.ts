@@ -16,9 +16,14 @@ export const schoolConfig = {
 
   // ASSETS - Client upload logo dan images mereka
   assets: {
-    logo: "/images/logo.png",
-    favicon: "/images/favicon.ico",
-    heroSlides: ["/images/hero-1.jpg", "/images/hero-2.jpg", "/images/hero-3.jpg", "/images/hero-4.jpg"],
+    logo: "https://via.placeholder.com/200x200/2563eb/ffffff?text=SMK+LOGO",
+    favicon: "/favicon.ico", // default Next.js favicon
+    heroSlides: [
+      "https://images.unsplash.com/photo-1562774053-701939374585?w=1920&h=1080&fit=crop",
+      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&h=1080&fit=crop",
+      "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&h=1080&fit=crop",
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&h=1080&fit=crop",
+    ],
   },
 
   // CONTACT INFO - Client edit sesuai sekolah mereka
