@@ -1,80 +1,94 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* CSS Variables for Theme System */
 :root {
-  --color-primary: #2563eb;
-  --color-secondary: #1e40af;
-  --color-accent: #f59e0b;
-  --color-background: #ffffff;
-  --color-surface: #f8fafc;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
-  --font-family: "Inter", sans-serif;
+  /* Blue Professional Theme (Default) */
+  --theme-primary: 37 99 235; /* #2563eb */
+  --theme-secondary: 30 64 175; /* #1e40af */
+  --theme-accent: 96 165 250; /* #60a5fa */
+  --theme-background: 255 255 255; /* #ffffff */
+  --theme-surface: 248 250 252; /* #f8fafc */
+  --theme-text: 30 41 59; /* #1e293b */
+  --theme-text-secondary: 100 116 139; /* #64748b */
+  --theme-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --theme-gradient-secondary: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  --theme-shadow: 0 4px 25px -5px rgba(37, 99, 235, 0.1);
 }
 
-/* Theme utility classes */
-@layer components {
-  .theme-primary {
-    background-color: var(--color-primary);
-  }
-
-  .theme-primary-hover:hover {
-    background-color: var(--color-secondary);
-  }
-
-  .theme-text-primary {
-    color: var(--color-primary);
-  }
-
-  .theme-border {
-    border-color: var(--color-border);
-  }
-
-  .theme-surface {
-    background-color: var(--color-surface);
-  }
-
-  .btn-primary {
-    @apply theme-primary hover:theme-primary-hover text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200;
-  }
-
-  .btn-secondary {
-    @apply border-2 theme-border theme-text-primary hover:theme-primary hover:text-white font-medium px-6 py-3 rounded-lg transition-all duration-200;
-  }
-
-  .card {
-    @apply bg-white border theme-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200;
-  }
-
-  .section-padding {
-    @apply py-16 px-4 sm:px-6 lg:px-8;
-  }
-
-  .container-custom {
-    @apply max-w-7xl mx-auto;
-  }
+/* Green Nature Theme */
+.theme-green-nature {
+  --theme-primary: 22 163 74; /* #16a34a */
+  --theme-secondary: 21 128 61; /* #15803d */
+  --theme-accent: 74 222 128; /* #4ade80 */
+  --theme-background: 255 255 255; /* #ffffff */
+  --theme-surface: 240 253 244; /* #f0fdf4 */
+  --theme-text: 20 83 45; /* #14532d */
+  --theme-text-secondary: 22 163 74; /* #16a34a */
+  --theme-gradient: linear-gradient(135deg, #48cc6c 0%, #6fcf97 100%);
+  --theme-gradient-secondary: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  --theme-shadow: 0 4px 25px -5px rgba(22, 163, 74, 0.1);
 }
 
-/* Modern scroll behavior */
+/* Purple Modern Theme */
+.theme-purple-modern {
+  --theme-primary: 147 51 234; /* #9333ea */
+  --theme-secondary: 124 58 237; /* #7c3aed */
+  --theme-accent: 192 132 252; /* #c084fc */
+  --theme-background: 255 255 255; /* #ffffff */
+  --theme-surface: 250 245 255; /* #faf5ff */
+  --theme-text: 88 28 135; /* #581c87 */
+  --theme-text-secondary: 124 58 237; /* #7c3aed */
+  --theme-gradient: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  --theme-gradient-secondary: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  --theme-shadow: 0 4px 25px -5px rgba(147, 51, 234, 0.1);
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  line-height: 1.6;
+  color: rgb(var(--theme-text));
+  background-color: rgb(var(--theme-background));
+  margin: 0;
+  padding: 0;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--color-surface);
+/* Utility classes using RGB values */
+@layer utilities {
+  .text-theme-primary {
+    color: rgb(var(--theme-primary));
+  }
+  .text-theme-secondary {
+    color: rgb(var(--theme-secondary));
+  }
+  .bg-theme-primary {
+    background-color: rgb(var(--theme-primary));
+  }
+  .bg-theme-secondary {
+    background-color: rgb(var(--theme-secondary));
+  }
+  .bg-theme-surface {
+    background-color: rgb(var(--theme-surface));
+  }
+  .bg-theme-gradient {
+    background: var(--theme-gradient);
+  }
+  .border-theme-primary {
+    border-color: rgb(var(--theme-primary));
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+/* Smooth transitions */
+* {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
