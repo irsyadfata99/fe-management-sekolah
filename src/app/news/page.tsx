@@ -11,7 +11,7 @@ import { useTheme } from "@/lib/ThemeProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import api from "@/lib/api";
-import { Calendar as CalendarIcon, User, Tag, Search, Filter, Grid3X3, List, ChevronLeft, ChevronRight, X, Eye, Clock, Share2 } from "lucide-react";
+import { Calendar as CalendarIcon, User, Tag, Search, Filter, Grid3X3, List, ChevronLeft, ChevronRight, X, Eye, Clock, Share2, Star, RefreshCw } from "lucide-react";
 
 // Types - Sesuai dengan database structure yang sebenarnya
 interface Article {
@@ -26,12 +26,12 @@ interface Article {
   slug_kategori?: string; // From JOIN with categories table
   warna_kategori?: string; // From JOIN with categories table
   penulis?: string;
-  is_published: number; // tinyint(1) - 0 or 1
+  is_published: number | boolean; // tinyint(1) - 0 or 1, converted to boolean
   tanggal_publish?: string;
-  is_featured: number; // tinyint(1) - 0 or 1
+  is_featured: number | boolean; // tinyint(1) - 0 or 1, converted to boolean
   meta_description?: string;
-  tags?: string;
-  views: number; // Renamed from jumlah_view
+  tags?: string[] | string;
+  views: number;
   created_at: string;
   updated_at: string;
 }
@@ -42,12 +42,12 @@ interface Category {
   slug: string;
   deskripsi?: string;
   warna: string;
-  jumlah_artikel: number;
+  total_artikel: number;
 }
 
 interface ArticleFilters {
   search: string;
-  category: string;
+  kategori: string;
   featured: string;
   sort: "latest" | "popular" | "oldest";
 }
@@ -79,7 +79,7 @@ function useArticlesData() {
       queryParams.append("limit", limit.toString());
 
       if (filters?.search) queryParams.append("search", filters.search);
-      if (filters?.category) queryParams.append("kategori", filters.category);
+      if (filters?.kategori) queryParams.append("kategori", filters.kategori);
       if (filters?.featured) queryParams.append("featured", filters.featured);
       if (filters?.sort) {
         switch (filters.sort) {
@@ -88,7 +88,7 @@ function useArticlesData() {
             queryParams.append("order", "desc");
             break;
           case "popular":
-            queryParams.append("sort", "jumlah_view");
+            queryParams.append("sort", "views");
             queryParams.append("order", "desc");
             break;
           case "oldest":
@@ -109,11 +109,12 @@ function useArticlesData() {
           setPagination(response.data.pagination);
         }
       } else {
-        throw new Error("No articles data available");
+        throw new Error("Invalid response format");
       }
-    } catch (error) {
-      console.log("❌ Articles API Error:", error);
-      setError("API not connected");
+    } catch (error: unknown) {
+      console.error("❌ Articles API Error:", error);
+      const errorMessage = error instanceof Error ? error.message : (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Gagal memuat artikel";
+      setError(errorMessage);
       setArticles([]);
     } finally {
       setLoading(false);
@@ -126,8 +127,8 @@ function useArticlesData() {
       if (response.data.success && response.data.data?.categories) {
         setCategories(response.data.data.categories);
       }
-    } catch {
-      console.log("Categories API not ready");
+    } catch (error) {
+      console.warn("Categories API not ready:", error);
     }
   };
 
@@ -155,7 +156,8 @@ function ArticleFilters({ filters, categories, onFilterChange, onReset }: { filt
           <Filter size={20} className="text-theme-primary mr-2" />
           <h3 className="text-lg font-semibold text-gray-900">Filter Berita</h3>
         </div>
-        <button onClick={onReset} className="text-sm text-gray-500 hover:text-theme-primary transition-colors">
+        <button onClick={onReset} className="text-sm text-gray-500 hover:text-theme-primary transition-colors flex items-center gap-1">
+          <RefreshCw size={14} />
           Reset Filter
         </button>
       </div>
@@ -175,8 +177,8 @@ function ArticleFilters({ filters, categories, onFilterChange, onReset }: { filt
 
         {/* Category */}
         <select
-          value={filters.category}
-          onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
+          value={filters.kategori}
+          onChange={(e) => onFilterChange({ ...filters, kategori: e.target.value })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
         >
           <option value="">Semua Kategori</option>
@@ -230,6 +232,19 @@ function ArticleCard({ article, isGrid }: { article: Article; isGrid: boolean })
     return text.substring(0, limit) + "...";
   };
 
+  // Process tags - handle both string and array
+  const processTags = (tags: string[] | string | undefined) => {
+    if (!tags) return [];
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === "string") {
+      return tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
+
   if (!isGrid) {
     // List View
     return (
@@ -244,18 +259,23 @@ function ArticleCard({ article, isGrid }: { article: Article; isGrid: boolean })
             {/* Content */}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                {article.kategori?.nama && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white" style={{ backgroundColor: article.kategori.warna || "#3B82F6" }}>
+                {article.nama_kategori && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white" style={{ backgroundColor: article.warna_kategori || "#3B82F6" }}>
                     <Tag size={10} className="mr-1" />
-                    {article.kategori.nama}
+                    {article.nama_kategori}
                   </span>
                 )}
-                {article.is_featured && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">⭐ Featured</span>}
+                {article.is_featured && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <Star size={10} className="mr-1" />
+                    Featured
+                  </span>
+                )}
               </div>
 
               <h3 className="text-xl font-bold text-gray-900 group-hover:text-theme-primary transition-colors mb-2 line-clamp-2">{article.judul}</h3>
 
-              <p className="text-gray-600 mb-3 line-clamp-2">{article.konten_singkat}</p>
+              <p className="text-gray-600 mb-3 line-clamp-2">{article.konten_singkat || article.konten_lengkap.substring(0, 150) + "..."}</p>
 
               <div className="flex items-center text-sm text-gray-500 space-x-4">
                 <div className="flex items-center">
@@ -285,6 +305,9 @@ function ArticleCard({ article, isGrid }: { article: Article; isGrid: boolean })
     );
   }
 
+  // Process tags for this component
+  const articleTags = processTags(article.tags);
+
   // Grid View
   return (
     <>
@@ -292,9 +315,12 @@ function ArticleCard({ article, isGrid }: { article: Article; isGrid: boolean })
         {/* Image */}
         <div className="relative h-48 overflow-hidden">
           <Image src={article.gambar_utama || "/images/default-article.jpg"} alt={article.judul} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-          {article.is_featured === 1 && (
+          {article.is_featured && (
             <div className="absolute top-3 right-3">
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">⭐ Featured</span>
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">
+                <Star size={10} className="mr-1" />
+                Featured
+              </span>
             </div>
           )}
         </div>
@@ -316,6 +342,20 @@ function ArticleCard({ article, isGrid }: { article: Article; isGrid: boolean })
 
           {/* Excerpt */}
           <p className="text-gray-600 text-sm mb-4 line-clamp-3">{article.konten_singkat || article.konten_lengkap.substring(0, 150) + "..."}</p>
+
+          {/* Tags Preview */}
+          {articleTags.length > 0 && (
+            <div className="mb-4">
+              <div className="flex flex-wrap gap-1">
+                {articleTags.slice(0, 3).map((tag, index) => (
+                  <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                    #{tag}
+                  </span>
+                ))}
+                {articleTags.length > 3 && <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs">+{articleTags.length - 3} more</span>}
+              </div>
+            </div>
+          )}
 
           {/* Meta */}
           <div className="flex items-center justify-between text-xs text-gray-500">
@@ -355,6 +395,20 @@ function ArticleModal({ article, isOpen, onClose }: { article: Article; isOpen: 
     });
   };
 
+  const processTags = (tags: string[] | string | undefined) => {
+    if (!tags) return [];
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === "string") {
+      return tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
+
+  const articleTags = processTags(article.tags);
+
   if (!isOpen) return null;
 
   return (
@@ -363,17 +417,30 @@ function ArticleModal({ article, isOpen, onClose }: { article: Article; isOpen: 
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center space-x-3">
-            {article.kategori?.nama && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white" style={{ backgroundColor: article.kategori.warna || "#3B82F6" }}>
+            {article.nama_kategori && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white" style={{ backgroundColor: article.warna_kategori || "#3B82F6" }}>
                 <Tag size={12} className="mr-1" />
-                {article.kategori.nama}
+                {article.nama_kategori}
               </span>
             )}
-            {article.is_featured && <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">⭐ Featured</span>}
+            {article.is_featured && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                <Star size={12} className="mr-1" />
+                Featured
+              </span>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">
-            <button onClick={() => navigator.share?.({ title: article.judul, url: window.location.href })} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+            <button
+              onClick={() =>
+                navigator.share?.({
+                  title: article.judul,
+                  url: window.location.href,
+                })
+              }
+              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+            >
               <Share2 size={16} />
             </button>
             <button onClick={onClose} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
@@ -399,16 +466,16 @@ function ArticleModal({ article, isOpen, onClose }: { article: Article; isOpen: 
             <div className="flex items-center">
               <User size={16} className="mr-2" />
               <span>
-                Oleh: <strong>{article.penulis}</strong>
+                Oleh: <strong>{article.penulis || "Admin"}</strong>
               </span>
             </div>
             <div className="flex items-center">
               <CalendarIcon size={16} className="mr-2" />
-              <span>{formatDate(article.tanggal_publish)}</span>
+              <span>{formatDate(article.tanggal_publish || article.created_at)}</span>
             </div>
             <div className="flex items-center">
               <Eye size={16} className="mr-2" />
-              <span>{article.jumlah_view.toLocaleString()} views</span>
+              <span>{article.views.toLocaleString()} views</span>
             </div>
           </div>
 
@@ -427,11 +494,11 @@ function ArticleModal({ article, isOpen, onClose }: { article: Article; isOpen: 
           </div>
 
           {/* Tags */}
-          {article.tags && article.tags.length > 0 && (
+          {articleTags.length > 0 && (
             <div className="mt-8 pt-6 border-t border-gray-100">
               <h4 className="font-semibold text-gray-900 mb-3">Tags:</h4>
               <div className="flex flex-wrap gap-2">
-                {article.tags.map((tag, index) => (
+                {articleTags.map((tag, index) => (
                   <span key={index} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm hover:bg-gray-200 transition-colors">
                     #{tag}
                   </span>
@@ -502,7 +569,7 @@ export default function NewsPage() {
 
   const [filters, setFilters] = useState<ArticleFilters>({
     search: "",
-    category: "",
+    kategori: "",
     featured: "",
     sort: "latest",
   });
@@ -524,13 +591,12 @@ export default function NewsPage() {
   const resetFilters = () => {
     const emptyFilters = {
       search: "",
-      category: "",
+      kategori: "",
       featured: "",
       sort: "latest" as const,
     };
     setFilters(emptyFilters);
-    setCurrentPage(1);
-    refetch();
+    refetch(emptyFilters, 1);
   };
 
   return (
@@ -539,7 +605,7 @@ export default function NewsPage() {
 
       <main className="flex-1 pt-16">
         {/* Hero Section */}
-        <section className="py-16 bg-gray-900 relative overflow-hidden">
+        <section className="py-16 bg-gradient-to-br from-theme-primary to-theme-secondary relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-64 h-64 border border-white/20 rounded-full"></div>
@@ -614,8 +680,9 @@ export default function NewsPage() {
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">📰</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Berita Tidak Tersedia</h3>
-                <p className="text-gray-500 mb-4">API backend belum tersedia. Silakan coba lagi nanti.</p>
+                <p className="text-gray-500 mb-4">{error}</p>
                 <button onClick={() => refetch()} className="inline-flex items-center bg-theme-primary text-white px-4 py-2 rounded-lg hover:bg-theme-secondary transition-colors">
+                  <RefreshCw size={16} className="mr-2" />
                   Coba Lagi
                 </button>
               </div>
