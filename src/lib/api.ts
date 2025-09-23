@@ -20,9 +20,7 @@ api.interceptors.request.use((config) => {
 
   // Debug logging in development
   if (process.env.NEXT_PUBLIC_DEBUG_API === "true") {
-    console.log(
-      `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`
-    );
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
   }
 
   return config;
@@ -38,17 +36,31 @@ api.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // Handle 401 Unauthorized - Auto logout
+    // Handle 401 Unauthorized - HANYA redirect untuk protected routes
     if (error.response?.status === 401) {
-      removeToken();
-      window.location.href = "/login";
+      const url = error.config?.url || "";
+
+      // Whitelist: Routes yang TIDAK boleh redirect
+      const publicEndpoints = [
+        "/public/",
+        "/api/calendar/public",
+        "/api/articles/public",
+        "/api/auth/login", // Login endpoint juga jangan redirect
+      ];
+
+      // Cek apakah ini public endpoint
+      const isPublicEndpoint = publicEndpoints.some((endpoint) => url.includes(endpoint));
+
+      // HANYA redirect jika BUKAN public endpoint
+      if (!isPublicEndpoint) {
+        removeToken();
+        window.location.href = "/login";
+      }
     }
 
     // Log errors in development
     if (process.env.NEXT_PUBLIC_DEBUG_API === "true") {
-      console.error(
-        `❌ API Error: ${error.response?.status} ${error.config?.url}`
-      );
+      console.error(`❌ API Error: ${error.response?.status} ${error.config?.url}`);
       console.error("Error details:", error.response?.data);
     }
 
