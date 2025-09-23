@@ -1,8 +1,3 @@
-// ============================================================================
-// ACADEMIC CALENDAR PAGE - src/app/calendar/page.tsx
-// Fully integrated with backend API, responsive design
-// ============================================================================
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,22 +6,20 @@ import { useTheme } from "@/lib/ThemeProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import api from "@/lib/api";
-import { Calendar as CalendarIcon, Clock, MapPin, Users, Tag, Download, Filter, ChevronLeft, ChevronRight, Grid3X3, List, Search, X } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, Users, Tag, Filter, Grid3X3, List, Search, X } from "lucide-react";
 
-// Types
+// Types - Sesuai dengan database structure
 interface AcademicEvent {
   id: number;
   judul_kegiatan: string;
-  deskripsi: string;
+  deskripsi?: string;
   tanggal_mulai: string;
-  tanggal_selesai: string;
+  tanggal_selesai?: string;
   waktu_mulai?: string;
   waktu_selesai?: string;
-  lokasi: string;
+  lokasi?: string;
   jenis_kegiatan: "akademik" | "ekstrakurikuler" | "ujian" | "libur" | "acara_khusus";
   tingkat: "sekolah" | "kelas" | "individu";
-  target_peserta?: string;
-  pic_penanggungjawab?: string;
   status: "draft" | "published" | "completed" | "cancelled";
   tahun_ajaran: string;
   semester: "1" | "2";
@@ -59,15 +52,19 @@ function useCalendarData() {
       if (filters?.bulan) queryParams.append("bulan", filters.bulan);
       if (filters?.search) queryParams.append("search", filters.search);
 
-      const response = await api.get(`/api/calendar/public/events?${queryParams.toString()}`);
+      console.log("🔍 Making API call to:", `/api/public/calendar/events`);
+      const response = await api.get(`/api/public/calendar/events?${queryParams.toString()}`);
+
+      console.log("🔍 API Response:", response.data);
 
       if (response.data.success && Array.isArray(response.data.data)) {
+        console.log("✅ Events found:", response.data.data.length);
         setEvents(response.data.data);
       } else {
         throw new Error("No calendar data available");
       }
-    } catch {
-      console.log("Calendar API not ready");
+    } catch (error) {
+      console.log("❌ Calendar API Error:", error);
       setError("API not connected");
       setEvents([]);
     } finally {
@@ -94,127 +91,6 @@ const getEventTypeColor = (type: string) => {
   return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-200";
 };
 
-// Event Status Colors
-const getEventStatusColor = (status: string) => {
-  const colors = {
-    draft: "bg-gray-100 text-gray-600",
-    published: "bg-green-100 text-green-600",
-    completed: "bg-blue-100 text-blue-600",
-    cancelled: "bg-red-100 text-red-600",
-  };
-  return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-600";
-};
-
-// Calendar Filters Component
-function CalendarFilters({ filters, onFilterChange, onReset }: { filters: CalendarFilters; onFilterChange: (filters: CalendarFilters) => void; onReset: () => void }) {
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => `${currentYear - 2 + i}/${currentYear - 1 + i}`);
-
-  const months = [
-    { value: "1", label: "Januari" },
-    { value: "2", label: "Februari" },
-    { value: "3", label: "Maret" },
-    { value: "4", label: "April" },
-    { value: "5", label: "Mei" },
-    { value: "6", label: "Juni" },
-    { value: "7", label: "Juli" },
-    { value: "8", label: "Agustus" },
-    { value: "9", label: "September" },
-    { value: "10", label: "Oktober" },
-    { value: "11", label: "November" },
-    { value: "12", label: "Desember" },
-  ];
-
-  const eventTypes = [
-    { value: "akademik", label: "Akademik" },
-    { value: "ekstrakurikuler", label: "Ekstrakurikuler" },
-    { value: "ujian", label: "Ujian" },
-    { value: "libur", label: "Libur" },
-    { value: "acara_khusus", label: "Acara Khusus" },
-  ];
-
-  return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <Filter size={20} className="text-theme-primary mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Filter Kalender</h3>
-        </div>
-        <button onClick={onReset} className="text-sm text-gray-500 hover:text-theme-primary transition-colors">
-          Reset Filter
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Search */}
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Cari kegiatan..."
-            value={filters.search}
-            onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
-          />
-        </div>
-
-        {/* Tahun Ajaran */}
-        <select
-          value={filters.tahun_ajaran}
-          onChange={(e) => onFilterChange({ ...filters, tahun_ajaran: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
-        >
-          <option value="">Semua Tahun</option>
-          {years.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-
-        {/* Semester */}
-        <select
-          value={filters.semester}
-          onChange={(e) => onFilterChange({ ...filters, semester: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
-        >
-          <option value="">Semua Semester</option>
-          <option value="1">Semester 1</option>
-          <option value="2">Semester 2</option>
-        </select>
-
-        {/* Jenis Kegiatan */}
-        <select
-          value={filters.jenis_kegiatan}
-          onChange={(e) => onFilterChange({ ...filters, jenis_kegiatan: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
-        >
-          <option value="">Semua Jenis</option>
-          {eventTypes.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </select>
-
-        {/* Bulan */}
-        <select
-          value={filters.bulan}
-          onChange={(e) => onFilterChange({ ...filters, bulan: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
-        >
-          <option value="">Semua Bulan</option>
-          {months.map((month) => (
-            <option key={month.value} value={month.value}>
-              {month.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
-}
-
 // Event Card Component
 function EventCard({ event }: { event: AcademicEvent }) {
   const [showDetails, setShowDetails] = useState(false);
@@ -229,7 +105,7 @@ function EventCard({ event }: { event: AcademicEvent }) {
 
   const formatTime = (timeStr?: string) => {
     if (!timeStr) return "";
-    return timeStr.substring(0, 5); // HH:MM format
+    return timeStr.substring(0, 5);
   };
 
   return (
@@ -244,7 +120,6 @@ function EventCard({ event }: { event: AcademicEvent }) {
                 <Tag size={12} className="mr-1" />
                 {event.jenis_kegiatan.replace("_", " ")}
               </span>
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getEventStatusColor(event.status)}`}>{event.status}</span>
             </div>
           </div>
         </div>
@@ -255,7 +130,7 @@ function EventCard({ event }: { event: AcademicEvent }) {
             <CalendarIcon size={16} className="mr-2 text-theme-primary flex-shrink-0" />
             <span>
               {formatDate(event.tanggal_mulai)}
-              {event.tanggal_selesai !== event.tanggal_mulai && ` - ${formatDate(event.tanggal_selesai)}`}
+              {event.tanggal_selesai !== event.tanggal_mulai && ` - ${formatDate(event.tanggal_selesai || "")}`}
             </span>
           </div>
 
@@ -275,13 +150,6 @@ function EventCard({ event }: { event: AcademicEvent }) {
               <span>{event.lokasi}</span>
             </div>
           )}
-
-          {event.target_peserta && (
-            <div className="flex items-center">
-              <Users size={16} className="mr-2 text-theme-primary flex-shrink-0" />
-              <span>{event.target_peserta}</span>
-            </div>
-          )}
         </div>
 
         {/* Description Preview */}
@@ -292,109 +160,17 @@ function EventCard({ event }: { event: AcademicEvent }) {
         )}
       </div>
 
-      {/* Event Details Modal */}
+      {/* Modal */}
       {showDetails && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">{event.judul_kegiatan}</h2>
               <button onClick={() => setShowDetails(false)} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
                 <X size={16} />
               </button>
             </div>
-
-            {/* Modal Content */}
-            <div className="p-6">
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getEventTypeColor(event.jenis_kegiatan)}`}>
-                  <Tag size={14} className="mr-1" />
-                  {event.jenis_kegiatan.replace("_", " ")}
-                </span>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getEventStatusColor(event.status)}`}>{event.status}</span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-theme-primary/10 text-theme-primary">
-                  {event.tahun_ajaran} - Semester {event.semester}
-                </span>
-              </div>
-
-              {/* Event Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="space-y-3">
-                  <div className="flex items-start">
-                    <CalendarIcon size={18} className="mr-3 text-theme-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-medium text-gray-900">Tanggal</div>
-                      <div className="text-gray-600">
-                        {formatDate(event.tanggal_mulai)}
-                        {event.tanggal_selesai !== event.tanggal_mulai && <span> - {formatDate(event.tanggal_selesai)}</span>}
-                      </div>
-                    </div>
-                  </div>
-
-                  {(event.waktu_mulai || event.waktu_selesai) && (
-                    <div className="flex items-start">
-                      <Clock size={18} className="mr-3 text-theme-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-gray-900">Waktu</div>
-                        <div className="text-gray-600">
-                          {formatTime(event.waktu_mulai)}
-                          {event.waktu_selesai && ` - ${formatTime(event.waktu_selesai)}`}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {event.lokasi && (
-                    <div className="flex items-start">
-                      <MapPin size={18} className="mr-3 text-theme-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-gray-900">Lokasi</div>
-                        <div className="text-gray-600">{event.lokasi}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  {event.target_peserta && (
-                    <div className="flex items-start">
-                      <Users size={18} className="mr-3 text-theme-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-gray-900">Target Peserta</div>
-                        <div className="text-gray-600">{event.target_peserta}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {event.pic_penanggungjawab && (
-                    <div className="flex items-start">
-                      <Users size={18} className="mr-3 text-theme-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-gray-900">Penanggung Jawab</div>
-                        <div className="text-gray-600">{event.pic_penanggungjawab}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-start">
-                    <Tag size={18} className="mr-3 text-theme-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-medium text-gray-900">Tingkat</div>
-                      <div className="text-gray-600 capitalize">{event.tingkat}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              {event.deskripsi && (
-                <div className="border-t border-gray-100 pt-6">
-                  <h4 className="font-semibold text-gray-900 mb-3">Deskripsi</h4>
-                  <p className="text-gray-600 leading-relaxed">{event.deskripsi}</p>
-                </div>
-              )}
-            </div>
+            <div className="p-6">{event.deskripsi && <p className="text-gray-600 leading-relaxed">{event.deskripsi}</p>}</div>
           </div>
         </div>
       )}
@@ -402,7 +178,7 @@ function EventCard({ event }: { event: AcademicEvent }) {
   );
 }
 
-// Main Calendar Page Component
+// Main Calendar Page Component - PASTIKAN INI ADA EXPORT DEFAULT
 export default function CalendarPage() {
   const { school } = useTheme();
   const { events, loading, error, refetch } = useCalendarData();
@@ -417,24 +193,6 @@ export default function CalendarPage() {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Handle filter changes
-  const handleFilterChange = (newFilters: CalendarFilters) => {
-    setFilters(newFilters);
-    refetch(newFilters);
-  };
-
-  const resetFilters = () => {
-    const emptyFilters = {
-      tahun_ajaran: "",
-      semester: "",
-      jenis_kegiatan: "",
-      bulan: "",
-      search: "",
-    };
-    setFilters(emptyFilters);
-    refetch();
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -442,13 +200,6 @@ export default function CalendarPage() {
       <main className="flex-1 pt-16">
         {/* Hero Section */}
         <section className="py-16 bg-gray-900 relative overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-64 h-64 border border-white/20 rounded-full"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 border border-white/20 rounded-full"></div>
-            <div className="absolute top-1/3 right-1/3 w-32 h-32 border border-white/20 rounded-full"></div>
-          </div>
-
           <div className="relative z-10 container-custom">
             <div className="text-center text-white">
               <span className="inline-block bg-white/10 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-full text-sm font-medium mb-4">Informasi Akademik</span>
@@ -481,9 +232,6 @@ export default function CalendarPage() {
         {/* Calendar Content */}
         <section className="py-16 bg-gray-50">
           <div className="container-custom">
-            {/* Filters */}
-            <CalendarFilters filters={filters} onFilterChange={handleFilterChange} onReset={resetFilters} />
-
             {/* View Controls */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center space-x-4">
