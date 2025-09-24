@@ -26,7 +26,7 @@ export default function Header() {
     { name: "Program Studi", href: "/programs" },
     { name: "Kalender Akademik", href: "/calendar" },
     { name: "Berita", href: "/news" },
-    { name: "SPMB", href: "/daftar" },
+    { name: "SPMB", href: "/spmb" },
     { name: "Kontak", href: "/contact" },
   ];
 
@@ -35,23 +35,41 @@ export default function Header() {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100" : "bg-white shadow-sm"}`}>
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
+          : "bg-white shadow-sm"
+      }`}
+    >
       <nav className="container-custom">
         <div className="flex items-center justify-between h-16">
           {/* Logo Section */}
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative">
-              <Image src={school.assets.logo} alt={`${school.name} Logo`} width={40} height={40} className="w-auto h-10 transition-transform duration-200 group-hover:scale-105" />
+              <Image
+                src={school.assets.logo}
+                alt={`${school.name} Logo`}
+                width={40}
+                height={40}
+                className="w-auto h-10 transition-transform duration-200 group-hover:scale-105"
+              />
             </div>
             <div className="hidden sm:block">
-              <span className="font-bold text-lg text-theme-primary transition-colors">{school.name}</span>
+              <span className="font-bold text-lg text-theme-primary transition-colors">
+                {school.name}
+              </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
             {navigation.map((item) => (
-              <Link key={item.name} href={item.href} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-theme-primary hover:bg-gray-50 transition-all duration-200">
+              <Link
+                key={item.name}
+                href={item.href}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-theme-primary hover:bg-gray-50 transition-all duration-200"
+              >
                 {item.name}
               </Link>
             ))}
@@ -69,17 +87,35 @@ export default function Header() {
             </button>
 
             {/* Mobile Menu Button */}
-            <button type="button" className="lg:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
-              {isMenuOpen ? <X size={24} className="text-gray-600" /> : <Menu size={24} className="text-gray-600" />}
+            <button
+              type="button"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? (
+                <X size={24} className="text-gray-600" />
+              ) : (
+                <Menu size={24} className="text-gray-600" />
+              )}
             </button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        <div className={`lg:hidden transition-all duration-300 overflow-hidden ${isMenuOpen ? "max-h-96 pb-4 border-t border-gray-100" : "max-h-0"}`}>
+        <div
+          className={`lg:hidden transition-all duration-300 overflow-hidden ${
+            isMenuOpen ? "max-h-96 pb-4 border-t border-gray-100" : "max-h-0"
+          }`}
+        >
           <div className="pt-4 space-y-2">
             {navigation.map((item) => (
-              <Link key={item.name} href={item.href} className="block px-4 py-3 rounded-lg font-medium text-gray-700 hover:text-theme-primary hover:bg-gray-50 transition-all duration-200" onClick={() => setIsMenuOpen(false)}>
+              <Link
+                key={item.name}
+                href={item.href}
+                className="block px-4 py-3 rounded-lg font-medium text-gray-700 hover:text-theme-primary hover:bg-gray-50 transition-all duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
                 {item.name}
               </Link>
             ))}
