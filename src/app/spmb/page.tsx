@@ -16,6 +16,7 @@ import {
   Download,
   GraduationCap,
   Send,
+  CreditCard,
 } from "lucide-react";
 
 // Types matching backend structure
@@ -117,6 +118,16 @@ interface SubmitResult {
   };
 }
 
+// Utility function for Indonesian currency formatting
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
 // Hooks
 function useSchoolInfo() {
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
@@ -198,6 +209,16 @@ function FileUpload({
     onChange(selectedFile);
   };
 
+  const getAcceptText = () => {
+    if (accept.includes("image") && accept.includes(".pdf")) {
+      return "JPG, PNG, PDF (Max 5MB)";
+    } else if (accept.includes("image")) {
+      return "JPG, PNG (Max 5MB)";
+    } else {
+      return "PDF (Max 5MB)";
+    }
+  };
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">
@@ -221,11 +242,7 @@ function FileUpload({
             <p className="text-sm text-gray-600">
               {file ? file.name : "Klik untuk upload file"}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {accept.includes("image")
-                ? "JPG, PNG (Max 5MB)"
-                : "PDF (Max 5MB)"}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">{getAcceptText()}</p>
           </div>
           <input
             type="file"
@@ -288,15 +305,15 @@ function PaymentOptionCard({
           <div className="mt-3 space-y-1">
             <div className="flex justify-between text-sm">
               <span>Biaya Program:</span>
-              <span>Rp {option.jumlah_pembayaran.toLocaleString("id-ID")}</span>
+              <span>{formatCurrency(option.jumlah_pembayaran)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Uang Pendaftaran:</span>
-              <span>Rp {option.uang_pendaftaran.toLocaleString("id-ID")}</span>
+              <span>{formatCurrency(option.uang_pendaftaran)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold border-t pt-2">
               <span>Total:</span>
-              <span>Rp {option.total_pembayaran.toLocaleString("id-ID")}</span>
+              <span>{formatCurrency(option.total_pembayaran)}</span>
             </div>
           </div>
         </div>
@@ -553,10 +570,7 @@ export default function SPMBRegistrationPage() {
                     <div className="flex justify-between">
                       <span>Total Pembayaran:</span>
                       <span className="font-bold">
-                        Rp{" "}
-                        {submitResult.data.total_pembayaran?.toLocaleString(
-                          "id-ID"
-                        )}
+                        {formatCurrency(submitResult.data.total_pembayaran)}
                       </span>
                     </div>
                   </div>
@@ -1084,7 +1098,7 @@ export default function SPMBRegistrationPage() {
                 </div>
               </div>
 
-              {/* Pilihan Jurusan & Pembayaran */}
+              {/* Pilihan Jurusan */}
               {formConfig && (
                 <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
                   <div className="flex items-center mb-6">
@@ -1093,95 +1107,104 @@ export default function SPMBRegistrationPage() {
                       size={24}
                     />
                     <h2 className="text-2xl font-bold text-gray-900">
-                      Pilihan Jurusan & Pembayaran
+                      Pilihan Jurusan
                     </h2>
                   </div>
 
-                  <div className="space-y-8">
-                    {/* Pilihan Jurusan */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4">
-                        Pilihan Jurusan *
-                      </label>
-                      <div className="grid grid-cols-1 gap-4">
-                        {formConfig.jurusan.map((jurusan) => (
-                          <div
-                            key={jurusan.id}
-                            className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                              formData.pilihan_jurusan_id ===
-                              jurusan.id.toString()
-                                ? "border-theme-primary bg-blue-50"
-                                : "border-gray-200 hover:border-gray-300"
-                            }`}
-                            onClick={() =>
-                              handleInputChange(
-                                "pilihan_jurusan_id",
-                                jurusan.id.toString()
-                              )
-                            }
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-gray-900">
-                                  {jurusan.nama_jurusan} ({jurusan.kode_jurusan}
-                                  )
-                                </h3>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {jurusan.deskripsi}
-                                </p>
-                                <p className="text-sm text-gray-500 mt-2">
-                                  Kuota: {jurusan.kuota_siswa} siswa
-                                </p>
-                              </div>
-                              <input
-                                type="radio"
-                                checked={
-                                  formData.pilihan_jurusan_id ===
-                                  jurusan.id.toString()
-                                }
-                                onChange={() => {}}
-                                className="h-4 w-4 text-theme-primary"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {errors.pilihan_jurusan_id && (
-                        <p className="text-red-500 text-sm mt-2">
-                          {errors.pilihan_jurusan_id}
-                        </p>
-                      )}
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Pilihan Jurusan *
+                    </label>
+                    <select
+                      value={formData.pilihan_jurusan_id}
+                      onChange={(e) =>
+                        handleInputChange("pilihan_jurusan_id", e.target.value)
+                      }
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-transparent ${
+                        errors.pilihan_jurusan_id
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <option value="">Pilih Jurusan</option>
+                      {formConfig.jurusan.map((jurusan) => (
+                        <option key={jurusan.id} value={jurusan.id.toString()}>
+                          {jurusan.nama_jurusan} ({jurusan.kode_jurusan}) -
+                          Kuota: {jurusan.kuota_siswa}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.pilihan_jurusan_id && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.pilihan_jurusan_id}
+                      </p>
+                    )}
 
-                    {/* Pilihan Pembayaran */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4">
-                        Jenis Pembayaran *
-                      </label>
-                      <div className="grid grid-cols-1 gap-4">
-                        {formConfig.payment_options.map((option) => (
-                          <PaymentOptionCard
-                            key={option.id}
-                            option={option}
-                            selected={
-                              formData.pilihan_pembayaran_id ===
-                              option.id.toString()
-                            }
-                            onSelect={() =>
-                              handleInputChange(
-                                "pilihan_pembayaran_id",
-                                option.id.toString()
-                              )
-                            }
-                          />
-                        ))}
+                    {formData.pilihan_jurusan_id && (
+                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        {(() => {
+                          const selectedJurusan = formConfig.jurusan.find(
+                            (j) =>
+                              j.id.toString() === formData.pilihan_jurusan_id
+                          );
+                          return selectedJurusan ? (
+                            <div>
+                              <h4 className="font-semibold text-blue-900">
+                                {selectedJurusan.nama_jurusan}
+                              </h4>
+                              <p className="text-sm text-blue-800 mt-1">
+                                {selectedJurusan.deskripsi}
+                              </p>
+                              <p className="text-sm text-blue-700 mt-2">
+                                <strong>Kuota:</strong>{" "}
+                                {selectedJurusan.kuota_siswa} siswa
+                              </p>
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
-                      {errors.pilihan_pembayaran_id && (
-                        <p className="text-red-500 text-sm mt-2">
-                          {errors.pilihan_pembayaran_id}
-                        </p>
-                      )}
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Pilihan Pembayaran */}
+              {formConfig && (
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+                  <div className="flex items-center mb-6">
+                    <CreditCard className="text-theme-primary mr-3" size={24} />
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Pilihan Pembayaran
+                    </h2>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-4">
+                      Jenis Pembayaran *
+                    </label>
+                    <div className="grid grid-cols-1 gap-4">
+                      {formConfig.payment_options.map((option) => (
+                        <PaymentOptionCard
+                          key={option.id}
+                          option={option}
+                          selected={
+                            formData.pilihan_pembayaran_id ===
+                            option.id.toString()
+                          }
+                          onSelect={() =>
+                            handleInputChange(
+                              "pilihan_pembayaran_id",
+                              option.id.toString()
+                            )
+                          }
+                        />
+                      ))}
                     </div>
+                    {errors.pilihan_pembayaran_id && (
+                      <p className="text-red-500 text-sm mt-2">
+                        {errors.pilihan_pembayaran_id}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -1202,9 +1225,10 @@ export default function SPMBRegistrationPage() {
                     </h3>
                     <ul className="text-sm text-blue-800 space-y-1">
                       <li>
-                        • Dokumen harus dalam format PDF, kecuali pas foto
-                        (JPG/PNG)
+                        • Dokumen bisa dalam format PDF atau gambar (JPG/PNG)
+                        untuk bukti pembayaran
                       </li>
+                      <li>• Untuk dokumen resmi lainnya, gunakan format PDF</li>
                       <li>• Ukuran maksimal file 5MB</li>
                       <li>• Pastikan dokumen terbaca dengan jelas</li>
                       <li>
@@ -1216,7 +1240,7 @@ export default function SPMBRegistrationPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FileUpload
                       label="Bukti Pembayaran"
-                      accept=".pdf"
+                      accept=".pdf,.jpg,.jpeg,.png"
                       required={true}
                       file={fileData.bukti_pembayaran}
                       onChange={(file) =>
