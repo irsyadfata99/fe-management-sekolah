@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Sidebar from "@/components/admin/Sidebar";
+
+interface AdminUser {
+  id: number;
+  username: string;
+  full_name: string;
+  role: string;
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -20,37 +28,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    // CRITICAL FIX: Add delay to ensure storage is ready after login
     await new Promise((resolve) => setTimeout(resolve, 200));
 
-    // Check if user has valid token with retry mechanism
-    let token = localStorage.getItem("admin_token") || sessionStorage.getItem("admin_token");
-    let userData = localStorage.getItem("admin_user") || sessionStorage.getItem("admin_user");
-
-    // Retry once if no token found (handle race condition)
-    if (!token || !userData) {
-      console.log("🔄 No token found, retrying in 300ms...");
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      token = localStorage.getItem("admin_token") || sessionStorage.getItem("admin_token");
-      userData = localStorage.getItem("admin_user") || sessionStorage.getItem("admin_user");
-    }
+    const token = localStorage.getItem("admin_token") || sessionStorage.getItem("admin_token");
+    const userData = localStorage.getItem("admin_user") || sessionStorage.getItem("admin_user");
 
     if (!token || !userData) {
-      console.log("❌ No authentication data found, redirecting to login");
-      // Redirect to login if no token
       router.replace("/admin/login");
       return;
     }
 
     try {
-      // Parse user data to verify it's valid
-      const user = JSON.parse(userData);
-      console.log("✅ Authentication verified for:", user.username);
-      setIsAuthenticated(true);
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
     } catch (error) {
-      console.error("❌ Invalid user data:", error);
-      // Invalid user data, redirect to login
       localStorage.removeItem("admin_token");
       localStorage.removeItem("admin_user");
       sessionStorage.removeItem("admin_token");
@@ -60,6 +51,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     setIsLoading(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
+    sessionStorage.removeItem("admin_token");
+    sessionStorage.removeItem("admin_user");
+    router.push("/admin/login");
   };
 
   // Show loading for protected routes
@@ -74,5 +73,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  return <>{children}</>;
+  // Login page - no sidebar
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  // Protected pages - with sidebar
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex">
+      <Sidebar user={user} onLogout={handleLogout} />
+      <div className="flex-1 overflow-auto">{children}</div>
+    </div>
+  );
 }
