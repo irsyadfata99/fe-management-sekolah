@@ -3,16 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import {
-  Eye,
-  EyeOff,
-  User,
-  Lock,
-  Loader2,
-  AlertCircle,
-  Shield,
-  School,
-} from "lucide-react";
+import { Eye, EyeOff, User, Lock, Loader2, AlertCircle, Shield, School } from "lucide-react";
 
 interface LoginFormData {
   username: string;
@@ -53,10 +44,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (
-    field: keyof LoginFormData,
-    value: string | boolean
-  ) => {
+  const handleInputChange = (field: keyof LoginFormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear field-specific error when user starts typing
@@ -102,36 +90,51 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      const response = await api.post("/api/admin/login", {
+      console.log("🔄 Attempting login...", { username: formData.username });
+
+      const response = await api.post("/api/auth/login", {
         username: formData.username,
         password: formData.password,
         remember_me: formData.remember_me,
       });
 
+      console.log("📡 Response received:", response.status, response.data);
       const result = response.data as LoginResponse;
 
       if (result.success && result.data) {
-        // Store auth token
-        if (formData.remember_me) {
-          localStorage.setItem("admin_token", result.data.token);
-          localStorage.setItem("admin_user", JSON.stringify(result.data.user));
-        } else {
-          sessionStorage.setItem("admin_token", result.data.token);
-          sessionStorage.setItem(
-            "admin_user",
-            JSON.stringify(result.data.user)
-          );
-        }
+        console.log("✅ Login successful, storing token...");
 
-        // Redirect to admin dashboard
-        router.push("/admin/dashboard");
+        // Store auth token
+        const storage = formData.remember_me ? localStorage : sessionStorage;
+
+        storage.setItem("admin_token", result.data.token);
+        storage.setItem("admin_user", JSON.stringify(result.data.user));
+
+        console.log("💾 Token stored successfully");
+
+        // CRITICAL FIX: Wait for storage to complete before redirect
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Verify storage before redirect
+        const storedToken = storage.getItem("admin_token");
+        const storedUser = storage.getItem("admin_user");
+
+        if (storedToken && storedUser) {
+          console.log("🔄 Storage verified, redirecting...");
+
+          // Use replace instead of push to avoid back button issues
+          window.location.replace("/admin/dashboard");
+        } else {
+          throw new Error("Failed to store authentication data");
+        }
       } else {
+        console.log("❌ Login failed:", result.message);
         setError(result.message || "Login gagal");
       }
     } catch (err) {
+      console.error("❌ Login error:", err);
       const apiError = err as { response?: { data?: ApiErrorResponse } };
-      const errorMessage =
-        apiError.response?.data?.message || "Terjadi kesalahan saat login";
+      const errorMessage = apiError.response?.data?.message || "Terjadi kesalahan saat login";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -146,9 +149,7 @@ export default function AdminLoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4">
             <Shield className="w-8 h-8 text-theme-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Admin Portal
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Portal</h1>
           <p className="text-gray-600">Masuk ke dashboard administrasi</p>
         </div>
 
@@ -156,9 +157,7 @@ export default function AdminLoginPage() {
         <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-8">
           <div className="flex items-center justify-center mb-6">
             <School className="w-6 h-6 text-theme-primary mr-2" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Login Administrator
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900">Login Administrator</h2>
           </div>
 
           {/* General Error Message */}
@@ -172,9 +171,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-gray-400" />
@@ -182,28 +179,20 @@ export default function AdminLoginPage() {
                 <input
                   type="text"
                   value={formData.username}
-                  onChange={(e) =>
-                    handleInputChange("username", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("username", e.target.value)}
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-colors ${
-                    errors.username
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300 hover:border-gray-400"
+                    errors.username ? "border-red-500 bg-red-50" : "border-gray-300 hover:border-gray-400"
                   }`}
                   placeholder="Masukkan username"
                   disabled={isLoading}
                 />
               </div>
-              {errors.username && (
-                <p className="text-red-500 text-sm mt-1">{errors.username}</p>
-              )}
+              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
             </div>
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
@@ -211,33 +200,18 @@ export default function AdminLoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) =>
-                    handleInputChange("password", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("password", e.target.value)}
                   className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-colors ${
-                    errors.password
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300 hover:border-gray-400"
+                    errors.password ? "border-red-500 bg-red-50" : "border-gray-300 hover:border-gray-400"
                   }`}
                   placeholder="Masukkan password"
                   disabled={isLoading}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  disabled={isLoading}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center" disabled={isLoading}>
+                  {showPassword ? <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" /> : <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
 
             {/* Remember Me */}
@@ -247,25 +221,16 @@ export default function AdminLoginPage() {
                   id="remember-me"
                   type="checkbox"
                   checked={formData.remember_me}
-                  onChange={(e) =>
-                    handleInputChange("remember_me", e.target.checked)
-                  }
+                  onChange={(e) => handleInputChange("remember_me", e.target.checked)}
                   className="h-4 w-4 text-theme-primary focus:ring-theme-primary border-gray-300 rounded"
                   disabled={isLoading}
                 />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 text-sm text-gray-700"
-                >
+                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700">
                   Ingat saya
                 </label>
               </div>
 
-              <button
-                type="button"
-                className="text-sm text-theme-primary hover:text-theme-secondary transition-colors"
-                disabled={isLoading}
-              >
+              <button type="button" className="text-sm text-theme-primary hover:text-theme-secondary transition-colors" disabled={isLoading}>
                 Lupa password?
               </button>
             </div>
@@ -275,9 +240,7 @@ export default function AdminLoginPage() {
               type="submit"
               disabled={isLoading}
               className={`w-full flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white transition-colors ${
-                isLoading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-theme-primary hover:bg-theme-secondary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary"
+                isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               }`}
             >
               {isLoading ? (
@@ -293,21 +256,14 @@ export default function AdminLoginPage() {
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <p className="text-xs text-gray-500">
-              Halaman khusus administrator sistem
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Hubungi IT Support jika mengalami masalah login
-            </p>
+            <p className="text-xs text-gray-500">Halaman khusus administrator sistem</p>
+            <p className="text-xs text-gray-500 mt-1">Hubungi IT Support jika mengalami masalah login</p>
           </div>
         </div>
 
         {/* Back to Main Site */}
         <div className="text-center mt-6">
-          <button
-            onClick={() => router.push("/")}
-            className="text-sm text-gray-600 hover:text-theme-primary transition-colors"
-          >
+          <button onClick={() => router.push("/")} className="text-sm text-gray-600 hover:text-theme-primary transition-colors">
             ← Kembali ke halaman utama
           </button>
         </div>
